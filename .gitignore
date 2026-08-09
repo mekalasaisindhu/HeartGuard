@@ -1,0 +1,24 @@
+# Python cache and artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.Python
+
+# Local datasets and raw files
+raw/
+dataset/
+
+# Logs and local data
+*.log
+backend/feedback_log.csv
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db

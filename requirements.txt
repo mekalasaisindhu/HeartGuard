@@ -1,0 +1,15 @@
+flask
+flask-cors
+gunicorn
+tensorflow
+keras
+scikit-learn
+librosa
+soundfile
+numpy
+pandas
+matplotlib
+pillow
+scipy
+tqdm
+scikit-image
