@@ -35,12 +35,14 @@ UPLOAD_FOLDER.mkdir(exist_ok=True)
 ALLOWED_EXTENSIONS = {'wav', 'mp3', 'flac', 'ogg'}
 
 # Load models at startup
-print("Loading models...")
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_DIR = BASE_DIR / 'models'
+print("Loading models from:", MODEL_DIR)
 try:
-    predictor = load_models('backend/models')
+    predictor = load_models(MODEL_DIR)
     print("✓ Models loaded successfully")
 except Exception as e:
-    print(f"Warning: Could not load models: {e}")
+    print(f"Warning: Could not load models from {MODEL_DIR}: {e}")
     print("Please train models first using: python backend/train.py")
     predictor = None
 
