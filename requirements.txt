@@ -1,8 +1,7 @@
 flask
 flask-cors
 gunicorn
-tensorflow
-keras
+tensorflow-cpu==2.13.0
 scikit-learn
 librosa
 soundfile
