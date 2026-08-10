@@ -274,7 +274,7 @@ def train_cnn(X_train, y_train, X_test, y_test):
     )
     
     checkpoint = ModelCheckpoint(
-        MODELS_DIR / 'cnn_model_best.h5',
+        str(MODELS_DIR / 'cnn_model_best.h5'),
         monitor='val_accuracy',
         save_best_only=True,
         verbose=1
