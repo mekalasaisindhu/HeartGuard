@@ -8,6 +8,7 @@ import pickle
 from tensorflow import keras
 from pathlib import Path
 import sys
+import time
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -115,12 +116,13 @@ class HybridPredictor:
         
         return int(prediction), float(confidence)
     
-    def hybrid_predict(self, audio_file_path):
+    def hybrid_predict(self, audio_file_path, preprocessed=None):
         """
         Perform hybrid prediction combining SVM and CNN.
         
         Args:
             audio_file_path: Path to audio file
+            preprocessed: Optional preprocessed audio dict to avoid duplicate processing
             
         Returns:
             dict containing:
@@ -131,17 +133,30 @@ class HybridPredictor:
                 - cnn_prediction: CNN prediction
                 - cnn_confidence: CNN confidence
         """
-        # Preprocess audio
-        preprocessed = preprocess_audio(audio_file_path)
+        print("[PREDICT] Starting hybrid_predict")
+        if preprocessed is None:
+            print("[PREDICT] No preprocessed audio provided, calling preprocess_audio")
+            preprocess_start = time.time()
+            preprocessed = preprocess_audio(audio_file_path)
+            print(f"[PREDICT] Internal preprocess_audio completed in {time.time() - preprocess_start:.2f} seconds")
+        else:
+            print("[PREDICT] Using preprocessed audio from calling endpoint")
+
         audio = preprocessed['filtered_audio']
         mel_spec = preprocessed['mel_spectrogram']
         sr = preprocessed['sr']
         
         # Get SVM prediction
+        svm_start = time.time()
+        print("[PREDICT] Starting SVM prediction")
         svm_pred, svm_conf = self.predict_svm(audio, sr)
+        print(f"[PREDICT] SVM prediction completed in {time.time() - svm_start:.2f} seconds")
         
         # Get CNN prediction
+        cnn_start = time.time()
+        print("[PREDICT] Starting CNN prediction")
         cnn_pred, cnn_conf = self.predict_cnn(mel_spec)
+        print(f"[PREDICT] CNN prediction completed in {time.time() - cnn_start:.2f} seconds")
         
         # Combine predictions using weighted average
         # Convert predictions to probabilities

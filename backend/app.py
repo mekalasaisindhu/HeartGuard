@@ -12,6 +12,7 @@ import traceback
 import sys
 import csv
 from datetime import datetime
+import time
 import numpy as np
 import librosa
 
@@ -204,64 +205,69 @@ def analyze():
     """
     Complete analysis: process and predict in one call with interactive data.
     """
+    start_time = time.time()
     try:
+        print("[ANALYZE] Request received")
+
         # Get file path from request
         data = request.get_json(silent=True) or {}
         file_path = data.get('file_path')
-        
-        if not file_path or not Path(file_path).exists():
-            return jsonify({'error': 'Invalid file path'}), 400
-        
-        # Process audio
-        preprocessed = preprocess_audio(file_path)
+        print(f"[ANALYZE] file_path payload: {file_path}")
+
+        if not file_path:
+            print("[ANALYZE] Missing file_path in request")
+            return jsonify({'error': 'Invalid file path', 'message': 'Missing file_path in request'}), 400
+
+        audio_path = Path(file_path)
+        print(f"[ANALYZE] Resolved audio_path: {audio_path}")
+        print(f"[ANALYZE] Path exists: {audio_path.exists()}")
+        if audio_path.exists():
+            print(f"[ANALYZE] File size: {audio_path.stat().st_size} bytes")
+
+        if not audio_path.exists():
+            return jsonify({'error': 'Invalid file path', 'message': 'Uploaded audio file was not found on server'}), 400
+
+        # Audio preprocessing
+        print("[ANALYZE] Starting audio preprocessing")
+        preprocess_start = time.time()
+        preprocessed = preprocess_audio(str(audio_path))
+        preprocess_elapsed = time.time() - preprocess_start
+        print(f"[ANALYZE] Audio preprocessing completed in {preprocess_elapsed:.2f} seconds")
+
         sr = preprocessed['sr']
-        
+
         # Prepare Plotly Data
-        # 1. Waveform (Downsampled to 2000 points max)
+        print("[ANALYZE] Preparing plotly waveform and spectrogram data")
         audio = preprocessed['filtered_audio']
         max_pts = 2000
         step = max(1, len(audio) // max_pts)
         waveform_data = audio[::step].tolist()
         waveform_times = (np.arange(0, len(audio), step) / sr).tolist()
 
-        # 2. Spectrogram (Downsampled for Plotly Heatmap)
-        # Mel spec is (n_mels, n_frames)
         mel_spec = preprocessed['mel_spectrogram']
-        # Mel scales for Y-axis (Frequencies)
         frequencies = librosa.mel_frequencies(n_mels=mel_spec.shape[0], fmin=0, fmax=sr/2).tolist()
-        # Time scales for X-axis
-        # HOP_LENGTH is defined in preprocessing.py as 512
         spec_times = librosa.frames_to_time(np.arange(mel_spec.shape[1]), sr=sr, hop_length=HOP_LENGTH).tolist()
-        
-        # Downsample spectrogram slightly if too large (e.g. max 500 frames for UI performance)
         frame_step = max(1, mel_spec.shape[1] // 500)
         plotly_spec = mel_spec[:, ::frame_step].tolist()
         plotly_spec_times = spec_times[::frame_step]
 
         # Generate static visualizations as fallback
-        original_waveform_img = plot_waveform(
-            preprocessed['original_audio'],
-            sr,
-            title='Original Waveform'
-        )
-        
-        filtered_waveform_img = plot_waveform(
-            preprocessed['filtered_audio'],
-            sr,
-            title='Filtered Waveform'
-        )
-        
-        spectrogram_img = plot_spectrogram(
-            mel_spec,
-            sr,
-            title='Mel Spectrogram'
-        )
-        
+        print("[ANALYZE] Generating static visualizations")
+        original_waveform_img = plot_waveform(preprocessed['original_audio'], sr, title='Original Waveform')
+        filtered_waveform_img = plot_waveform(preprocessed['filtered_audio'], sr, title='Filtered Waveform')
+        spectrogram_img = plot_spectrogram(mel_spec, sr, title='Mel Spectrogram')
+
         # Make prediction
         prediction_result = None
         if predictor is not None:
-            prediction_result = predictor.hybrid_predict(file_path)
-        
+            print("[ANALYZE] Starting hybrid prediction")
+            prediction_start = time.time()
+            prediction_result = predictor.hybrid_predict(str(audio_path), preprocessed=preprocessed)
+            prediction_elapsed = time.time() - prediction_start
+            print(f"[ANALYZE] Hybrid prediction completed in {prediction_elapsed:.2f} seconds")
+        else:
+            print("[ANALYZE] Predictor not available")
+
         response = {
             'status': 'success',
             'visualizations': {
@@ -282,7 +288,7 @@ def analyze():
                 'anomalies': preprocessed['anomalies']
             }
         }
-        
+
         if prediction_result:
             response['prediction'] = {
                 'result': prediction_result['prediction'],
@@ -294,13 +300,18 @@ def analyze():
                 'bpm': prediction_result.get('bpm', 0),
                 'insights': prediction_result.get('insights', [])
             }
-        
+
+        total_elapsed = time.time() - start_time
+        print(f"[ANALYZE] Analysis completed in {total_elapsed:.2f} seconds")
         return jsonify(response)
-    
+
     except Exception as e:
-        print(f"Error in analyze: {e}")
+        print(f"[ANALYZE] Error in analyze: {e}")
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'error': str(e),
+            'message': 'Failed to analyze the heart sound'
+        }), 500
 
 
 @app.route('/feedback', methods=['POST'])
