@@ -84,8 +84,8 @@ def upload_file():
         if not allowed_file(file.filename):
             return jsonify({'error': f'Invalid file type. Allowed: {", ".join(ALLOWED_EXTENSIONS)}'}), 400
         
-        # Save file
-        filename = f"upload_{os.urandom(8).hex()}_{file.filename}"
+        # Save file using a sanitized filename
+        filename = f"upload_{os.urandom(8).hex()}_{Path(file.filename).name}"
         file_path = UPLOAD_FOLDER / filename
         file.save(str(file_path))
         
@@ -113,7 +113,7 @@ def process_audio():
     """
     try:
         # Get file path from request
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         file_path = data.get('file_path')
         
         if not file_path or not Path(file_path).exists():
@@ -172,7 +172,7 @@ def predict():
             }), 503
         
         # Get file path from request
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         file_path = data.get('file_path')
         
         if not file_path or not Path(file_path).exists():
@@ -206,7 +206,7 @@ def analyze():
     """
     try:
         # Get file path from request
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         file_path = data.get('file_path')
         
         if not file_path or not Path(file_path).exists():
@@ -309,7 +309,7 @@ def submit_feedback():
     Log user feedback for future model training.
     """
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         filename = data.get('filename', 'unknown')
         prediction = data.get('prediction', 'unknown')
         user_label = data.get('user_label', 'unknown')

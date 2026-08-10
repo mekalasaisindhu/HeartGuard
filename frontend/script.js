@@ -4,9 +4,48 @@
  */
 
 // Configuration
-const API_BASE_URL = (window.location.port === '5500' || window.location.port === '5501')
-    ? 'http://127.0.0.1:5000'
-    : window.location.origin;
+const API_BASE_URL =
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === ''
+        ? 'http://127.0.0.1:5000'
+        : window.location.origin;
+
+async function parseResponse(response) {
+    const text = await response.text();
+    let data = null;
+
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch (error) {
+            console.warn('Invalid JSON response:', {url: response.url, body: text, error});
+        }
+    }
+
+    if (!response.ok) {
+        const message =
+            data?.message ||
+            data?.error ||
+            (text && !text.trim().startsWith('<') ? text : `Request failed with HTTP ${response.status}`);
+
+        const error = new Error(message || `Request failed with HTTP ${response.status}`);
+        error.status = response.status;
+        error.url = response.url;
+        error.body = text;
+
+        console.error('API request failed:', {
+            url: response.url,
+            status: response.status,
+            body: text,
+            parsed: data
+        });
+
+        throw error;
+    }
+
+    return data;
+}
 
 // DOM Elements
 const uploadZone = document.getElementById('uploadZone');
@@ -293,6 +332,7 @@ async function analyzeAudio() {
         return;
     }
 
+    analyzeBtn.disabled = true;
     try {
         // Show loading
         showLoading(true);
@@ -317,13 +357,17 @@ async function analyzeAudio() {
             saveToHistory(analysisResult);
         }
 
-        // Hide loading
-        showLoading(false);
-
     } catch (error) {
-        console.error('Analysis error:', error);
-        showError(error.message || 'An error occurred during analysis.');
+        console.error('Analysis error:', {
+            url: `${API_BASE_URL}/analyze`,
+            status: error.status,
+            message: error.message,
+            body: error.body
+        });
+        showError(error.message || 'Analysis failed. Please try again.');
+    } finally {
         showLoading(false);
+        analyzeBtn.disabled = !currentFile;
     }
 }
 
@@ -336,12 +380,7 @@ async function uploadFile(file) {
         body: formData
     });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
-    }
-
-    return await response.json();
+    return await parseResponse(response);
 }
 
 async function analyzeFile(filePath) {
@@ -353,12 +392,7 @@ async function analyzeFile(filePath) {
         body: JSON.stringify({ file_path: filePath })
     });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Analysis failed');
-    }
-
-    return await response.json();
+    return await parseResponse(response);
 }
 
 function displayResults(data, columnId = 'mainAnalysis') {
@@ -711,11 +745,15 @@ async function submitFeedback(isCorrect) {
             body: JSON.stringify(feedbackData)
         });
 
-        if (response.ok) {
-            alert('Thank you for your feedback! This data will help improve the model.');
-        }
+        await parseResponse(response);
+        alert('Thank you for your feedback! This data will help improve the model.');
     } catch (e) {
-        console.error('Feedback failed', e);
+        console.error('Feedback failed:', {
+            url: `${API_BASE_URL}/feedback`,
+            status: e.status,
+            message: e.message,
+            body: e.body
+        });
     }
 }
 
@@ -758,7 +796,7 @@ function animateValue(id, start, end, duration, suffix = '') {
 async function checkBackendHealth() {
     try {
         const response = await fetch(`${API_BASE_URL}/health`);
-        const data = await response.json();
+        const data = await parseResponse(response);
 
         if (!data.models_loaded) {
             console.warn('Models not loaded. Please train models first.');
