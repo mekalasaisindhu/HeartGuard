@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results Obtained and Comparative Analysis | HeartGuard</title>
+  <style>
+    :root {
+      --bg: #f8fbff;
+      --card: #ffffff;
+      --text: #0f1c2d;
+      --muted: #627d98;
+      --accent: #1798b8;
+      --accent-soft: #d8f2f8;
+      --border: rgba(23, 152, 184, 0.16);
+      --shadow: 0 18px 60px rgba(15, 28, 45, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at top left, rgba(23, 152, 184, 0.12), transparent 35%),
+                  radial-gradient(circle at bottom right, rgba(23, 152, 184, 0.08), transparent 25%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px;
+    }
+
+    .container {
+      max-width: 1220px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+    }
+
+    .eyebrow::before {
+      content: '';
+      width: 40px;
+      height: 2px;
+      background: var(--accent);
+      display: inline-block;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.25rem, 2.5vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 780px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.75;
+    }
+
+    .grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(12, 1fr);
+      align-items: stretch;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+
+    .panel.large {
+      grid-column: span 8;
+    }
+
+    .panel.small {
+      grid-column: span 4;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      font-size: 1.15rem;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #ecf7fb;
+      color: var(--text);
+    }
+
+    .metric-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .metric-card {
+      background: var(--accent-soft);
+      border-radius: 20px;
+      padding: 18px 20px;
+      border: 1px solid rgba(23, 152, 184, 0.14);
+    }
+
+    .metric-card strong {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .metric-card .value {
+      font-size: 1.1rem;
+      color: var(--accent);
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+
+    .table th,
+    .table td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(9, 38, 60, 0.08);
+    }
+
+    .table th {
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .table td {
+      font-size: 0.98rem;
+      color: var(--text);
+    }
+
+    .table td.placeholder {
+      color: #a4b9c9;
+    }
+
+    .matrix {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: 1fr 1fr;
+      margin-top: 14px;
+    }
+
+    .matrix-cell {
+      border-radius: 18px;
+      padding: 18px;
+      text-align: center;
+      font-weight: 700;
+      color: var(--text);
+      background: #f3fbff;
+      border: 1px solid rgba(23, 152, 184, 0.12);
+    }
+
+    .matrix-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .matrix-label {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .observations {
+      margin-top: 26px;
+      padding: 24px 28px;
+      border-radius: 26px;
+      background: #ffffff;
+      border: 1px solid rgba(23, 152, 184, 0.12);
+    }
+
+    .observations p {
+      margin: 0;
+      font-size: 0.98rem;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    .observations li {
+      margin-bottom: 12px;
+      line-height: 1.75;
+    }
+
+    .note {
+      margin-top: 18px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 960px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .panel.large,
+      .panel.small {
+        grid-column: span 12;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="eyebrow">HeartGuard Project Expo</div>
+      <h1>RESULTS OBTAINED AND COMPARATIVE ANALYSIS</h1>
+      <p class="subtitle">A concise academic dashboard illustrating model comparison, performance metrics, and classification clarity for the HeartGuard chronic heart failure detection system.</p>
+    </header>
+
+    <div class="grid">
+      <section class="panel large">
+        <h2>Comparative Model Performance</h2>
+        <canvas id="performanceChart" height="320"></canvas>
+        <div class="chart-legend">
+          <span class="legend-pill">Model Benchmark (Placeholder values)</span>
+          <span class="legend-pill">Higher bars indicate stronger relative performance.</span>
+        </div>
+      </section>
+
+      <section class="panel small">
+        <h2>Performance Comparison</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Accuracy</td>
+              <td class="placeholder">-- (Placeholder)</td>
+            </tr>
+            <tr>
+              <td>Precision</td>
+              <td class="placeholder">-- (Placeholder)</td>
+            </tr>
+            <tr>
+              <td>Recall</td>
+              <td class="placeholder">-- (Placeholder)</td>
+            </tr>
+            <tr>
+              <td>F1-Score</td>
+              <td class="placeholder">-- (Placeholder)</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel small">
+        <h2>Confusion Matrix</h2>
+        <div class="matrix">
+          <div class="matrix-cell">
+            <div>True Normal</div>
+            <div style="margin-top: 24px; font-size: 1.35rem; color: var(--accent);">--</div>
+          </div>
+          <div class="matrix-cell">
+            <div>False Abnormal</div>
+            <div style="margin-top: 24px; font-size: 1.35rem; color: #3c91d1;">--</div>
+          </div>
+          <div class="matrix-cell">
+            <div>False Normal</div>
+            <div style="margin-top: 24px; font-size: 1.35rem; color: #3c91d1;">--</div>
+          </div>
+          <div class="matrix-cell">
+            <div>True Abnormal</div>
+            <div style="margin-top: 24px; font-size: 1.35rem; color: var(--accent);">--</div>
+          </div>
+        </div>
+        <div class="matrix-label">Labels: Normal / Abnormal heart sound classification.</div>
+      </section>
+
+      <section class="panel large observations">
+        <h2>Key Observations</h2>
+        <ul>
+          <li><strong>PCG signals provide useful information for cardiac classification.</strong></li>
+          <li><strong>Spectrograms help CNN identify important heart sound patterns.</strong></li>
+          <li><strong>ML and CNN models provide effective automated classification.</strong></li>
+        </ul>
+        <p class="note">Note: All metric values shown are placeholders to support a visual comparative presentation. Final experimental numbers should be updated after model evaluation.</p>
+      </section>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    const ctx = document.getElementById('performanceChart');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Random Forest', 'SVM', 'XGBoost', 'CNN'],
+        datasets: [{
+          label: 'Relative Placeholder Score',
+          data: [1, 2, 3, 4],
+          backgroundColor: ['#1798b8', '#00b5d8', '#62c8d7', '#0f5f76'],
+          borderRadius: 12,
+          maxBarThickness: 40,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return 'Placeholder score';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              color: '#2f3d55',
+              font: { size: 13 }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            suggestedMax: 5,
+            ticks: {
+              callback: value => value === 0 ? '' : 'Placeholder',
+              color: '#5d738b',
+              font: { size: 12 }
+            },
+            grid: {
+              color: 'rgba(23, 152, 184, 0.12)',
+              drawBorder: false
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
